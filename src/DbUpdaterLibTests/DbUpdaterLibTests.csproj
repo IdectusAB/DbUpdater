@@ -29,4 +29,23 @@
     <ProjectReference Include="..\DbUpdaterLib\DbUpdaterLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TestScripts\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestScripts\01_data\01_data.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestScripts\01_tables.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestScripts\02_views.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestScripts\03_procedures.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

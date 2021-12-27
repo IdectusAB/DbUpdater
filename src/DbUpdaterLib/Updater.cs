@@ -4,6 +4,8 @@
 namespace DbUpdaterLib
 {
     using System;
+    using System.IO;
+    using MySql.Data.MySqlClient;
 
     /// <summary>
     /// Main class that does all the work.
@@ -14,6 +16,7 @@ namespace DbUpdaterLib
         private readonly bool isDebug = false;
         private string scriptPath;
         private string dbConnectionString;
+        private MySqlConnection databaseConnection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Updater"/> class.
@@ -65,7 +68,6 @@ namespace DbUpdaterLib
             this.scriptPath = args[0];
             this.dbConnectionString = args[1];
 
-            // TODO: Check path and make sure we find at least one .sql file
             // Return true if everything checks out
             return true;
         }
@@ -80,11 +82,48 @@ namespace DbUpdaterLib
                 Console.WriteLine("DbUpdaterLib.Updater.Update()");
             }
 
-            // TODO: Load script files
-            Console.WriteLine($"Loading scripts from path {this.scriptPath}");
+            // Find all script files in specified folder
+            Console.WriteLine($"Loading scripts...");
+            FileInfo[] scriptFiles = Utils.FindSqlFiles(this.scriptPath);
+            if (scriptFiles == null)
+            {
+                Console.WriteLine($"Error: Folder [{this.scriptPath}] does not exist.");
+                return;
+            }
 
-            // TODO: Run all scripts on the database
-            Console.WriteLine($"Runnings scripts on database {this.dbConnectionString}");
+            if (scriptFiles.Length == 0)
+            {
+                Console.WriteLine("Error: No *.sql files found in folder.");
+                return;
+            }
+
+            try
+            {
+                // Create and open the database connection
+                this.databaseConnection = new MySqlConnection(this.dbConnectionString);
+                this.databaseConnection.Open();
+
+                // Run all scripts on the database
+                Console.WriteLine($"Runnings scripts...");
+                foreach (var scriptFile in scriptFiles)
+                {
+                    Console.Write($"Current file: {scriptFile.FullName}");
+                    if (!Utils.RunScript(this.databaseConnection, scriptFile.FullName))
+                    {
+                        break;
+                    }
+
+                    Console.Write(Environment.NewLine);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Write($"Exception: {ex.Message}");
+            }
+            finally
+            {
+                this.databaseConnection.Close();
+            }
         }
 
         /// <summary>
@@ -95,6 +134,12 @@ namespace DbUpdaterLib
             if (this.isDebug)
             {
                 Console.WriteLine("DbUpdaterLib.Updater.Cleanup()");
+            }
+
+            // This should not be necessary.
+            if (this.databaseConnection != null)
+            {
+                this.databaseConnection.Close();
             }
         }
 
@@ -121,7 +166,7 @@ namespace DbUpdaterLib
             Console.WriteLine("Usage:");
             Console.WriteLine("DbUpdater [folderPath] [connectionString]");
             Console.WriteLine("Example:");
-            Console.WriteLine("DbUpdater \"c:\\myscripts\" \"Server=myServerAddress;Database=myDataBase;Uid=myUsername;Pwd=myPassword;\"");
+            Console.WriteLine("DbUpdater \"c:\\myscripts\" \"Server=127.0.0.1;Port=3306;Database=dbName;Uid=dbUser;Pwd=strongPassword;\"");
             Console.WriteLine("----------------");
         }
     }

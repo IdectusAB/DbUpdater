@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbUpdater", "DbUpdater\DbUpdater.csproj", "{BE4684A2-38A3-4061-9BD1-888697A0A5DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbUpdaterLib", "DbUpdaterLib\DbUpdaterLib.csproj", "{9AFE84C6-A12B-4FA0-BF03-A735DB35AC03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbUpdaterLib", "DbUpdaterLib\DbUpdaterLib.csproj", "{9AFE84C6-A12B-4FA0-BF03-A735DB35AC03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbUpdaterLibTests", "DbUpdaterLibTests\DbUpdaterLibTests.csproj", "{DDA95A2F-C9F4-4D33-96B7-CC1222C6C8A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbUpdaterLibTests", "DbUpdaterLibTests\DbUpdaterLibTests.csproj", "{DDA95A2F-C9F4-4D33-96B7-CC1222C6C8A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
