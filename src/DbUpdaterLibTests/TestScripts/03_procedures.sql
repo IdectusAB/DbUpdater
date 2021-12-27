@@ -1,5 +1,9 @@
 USE DatabaseName;
 
+/*
+A multiline comment
+*/
+
 # CALL TestTableGet(21);
 # SELECT * FROM UsrUserSessions;
 DELIMITER $$
@@ -10,7 +14,6 @@ CREATE PROCEDURE TestTableGet(
 )
 proc_label:BEGIN
   DECLARE something VARBINARY(16);
-  -- Return empty resultset
   SELECT * FROM vTestTable WHERE TestTableID=_TestTableID;
 END
 $$
@@ -24,7 +27,8 @@ CREATE PROCEDURE TestTableGet2(
 )
 proc_label:BEGIN
   DECLARE something VARBINARY(16);
-  -- Return empty resultset
+  SELECT * FROM vTestTable WHERE TestTableID=_TestTableID;
+  SELECT * FROM vTestTable WHERE TestTableID=_TestTableID;
   SELECT * FROM vTestTable WHERE TestTableID=_TestTableID;
 END
 $$

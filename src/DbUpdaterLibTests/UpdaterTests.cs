@@ -87,5 +87,17 @@ namespace DbUpdaterLibTests
             Assert.AreEqual("03_procedures.sql", scriptFiles[2].Name);
             Assert.AreEqual("01_data.sql", scriptFiles[3].Name); // This is in a subfolder so it should be last
         }
+
+        /// <summary>
+        /// Strips a multiline comment inside a single line.
+        /// </summary>
+        [TestMethod]
+        public void StripComments()
+        {
+            string theLine = "This /* comment */ is correct!";
+            Assert.AreEqual("This  is correct!", DbUpdaterLib.Utils.StripCommentsFromLine(theLine));
+            string theLine2 = "This /* comment *//* another comment*/ is correct!";
+            Assert.AreEqual("This  is correct!", DbUpdaterLib.Utils.StripCommentsFromLine(theLine2));
+        }
     }
 }
