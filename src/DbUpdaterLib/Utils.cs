@@ -5,6 +5,7 @@ namespace DbUpdaterLib
 {
     using System;
     using System.IO;
+    using System.Text.RegularExpressions;
     using MySql.Data.MySqlClient;
 
     /// <summary>
@@ -103,40 +104,101 @@ namespace DbUpdaterLib
         {
             string[] lines = System.IO.File.ReadAllLines(filePath);
             string currentDelimiter = ";";
-            string currentCommand = string.Empty;
-            foreach (string line in lines)
+            bool isInMultilineComment = false;
+            bool isInTextfield = false;
+            string currentQuery = string.Empty;
+            foreach (string originalLine in lines)
             {
-                if (Utils.MySqlIgnoreLine(line))
+                // Get rid of multiline comments placed on a single line
+                string line = Utils.StripCommentsFromLine(originalLine);
+
+                // If the line is a comment or empty, ignore it
+                if (Utils.MySqlIgnoreLine(originalLine))
                 {
                     continue;
                 }
 
+                // Handle multiline comments that spans over multiple lines.
+                if (line.Contains("/*"))
+                {
+                    isInMultilineComment = true;
+                    continue;
+                }
+
+                if (line.Contains("*/"))
+                {
+                    isInMultilineComment = false;
+                    continue;
+                }
+
+                if (isInMultilineComment)
+                {
+                    continue;
+                }
+
+                // Change current delimiter
                 if (Utils.MySqlIsDelimiterChange(line))
                 {
                     currentDelimiter = Utils.MySqlExtractDelimiter(line);
+                    currentQuery += line + Environment.NewLine;
                     continue;
                 }
 
-                currentCommand += line + Environment.NewLine;
+                currentQuery += line + Environment.NewLine;
 
-                if (currentCommand.Contains(currentDelimiter))
+                // Parse each char in the line and keep track of if we are inside a textfield.
+                foreach (char c in line)
                 {
-                    if (!currentDelimiter.Equals(";"))
+                    if (c.Equals('\''))
                     {
-                        currentCommand = currentCommand.Replace(currentDelimiter, string.Empty);
+                        isInTextfield = !isInTextfield;
                     }
+                }
 
-                    if (!RunMySqlCommand(connection, currentCommand))
+                // Trigger the query if current delimiter found and if we are not within a textstring.
+                if (line.EndsWith(currentDelimiter) && !isInTextfield)
+                {
+                    if (!RunMySqlScript(connection, currentQuery, currentDelimiter))
                     {
                         return false;
                     }
 
-                    currentCommand = string.Empty;
+                    currentQuery = string.Empty;
+                    isInTextfield = false;
                     Console.Write(".");
                 }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Strips multiline comments from a single line if they exist.
+        /// </summary>
+        /// <param name="line">The line to check.</param>
+        /// <returns>A line free from multiline comments.</returns>
+        public static string StripCommentsFromLine(string line)
+        {
+            if (line.Contains("/*") && line.Contains("*/"))
+            {
+                var blockComments = @"/\*(.*?)\*/";
+                string noComments = Regex.Replace(
+                    line,
+                    blockComments,
+                    me =>
+                    {
+                        if (me.Value.StartsWith("/*"))
+                        {
+                            return string.Empty;
+                        }
+
+                        return me.Value;
+                    },
+                    RegexOptions.Singleline);
+                return noComments;
+            }
+
+            return line;
         }
 
         /// <summary>
@@ -155,6 +217,30 @@ namespace DbUpdaterLib
             catch (Exception ex)
             {
                 Console.WriteLine($"{Environment.NewLine}Error:{Environment.NewLine}{command}{Environment.NewLine} failed with exception: {ex.Message}");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Run individual sql query as script.
+        /// </summary>
+        /// <param name="connection">The database connection.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="delimiter">The current delimiter to use.</param>
+        /// <returns>True is no error occured.</returns>
+        private static bool RunMySqlScript(MySqlConnection connection, string query, string delimiter)
+        {
+            try
+            {
+                var script = new MySqlScript(connection, query);
+                script.Delimiter = delimiter;
+                script.Execute();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{Environment.NewLine}Error:{Environment.NewLine}{query}{Environment.NewLine} failed with exception: {ex.Message}");
                 return false;
             }
 
